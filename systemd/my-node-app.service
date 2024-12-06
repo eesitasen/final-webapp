@@ -1,0 +1,15 @@
+[Unit]
+Description=My Node.js Application Service
+ConditionPathExists=/etc/environment
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/environment
+Type=simple
+User=csye6225
+Group=csye6225
+ExecStart=/bin/bash -c '. /etc/environment && /usr/bin/node /opt/csye6225/app/app.js'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

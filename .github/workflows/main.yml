@@ -1,0 +1,52 @@
+name: Packer Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Configure AWS CLI using secrets
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Step 3: Install Packer
+      - name: Install Packer and jq
+        run: |
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install -y packer jq
+
+      # Step 4: Install Node.js (required to build the application)
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14" # Set the version of Node.js that matches app requirements
+
+      # Step 5: Build application artifact (e.g., create a zip of the app)
+      - name: Build application artifact
+        run: |
+          mkdir -p build
+          zip -r ./build/artifact.zip . -x "node_modules/*" ".git/*"
+
+      # Step 6:
+      - name: Run Packer init
+        run: packer init aws-ubuntu.pkr.hcl
+
+      # Step 7: Run Packer build to create the custom AMI
+      - name: Build AMI with Packer
+        run: |
+
+          packer build aws-ubuntu.pkr.hcl
