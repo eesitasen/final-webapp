@@ -223,33 +223,93 @@ app.get("/", (req, res) => {
   res.send("Hello, World!!");
 });
 
+// // Database connection verification route
+// app.get("/healthz", async (req, res) => {
+//   // try {
+//   //   await sequelize.authenticate();
+//   //   res.send('Database connection has been established successfully.');
+//   // } catch (error) {
+//   //   res.status(500).send('Unable to connect to the database: ' + error.message);
+//   // }
+
+//   try {
+//     // Disallow the HEAD method
+//     if (req.method === "HEAD") {
+//       return res.status(405).json({ message: "Method Not Allowed" }); // Method Not Allowed
+//     }
+//     // Disallow any body content (e.g., form data) by checking if Content-Type is present
+//     if (req.headers["content-type"]) {
+//       return res.status(400).send();
+//     }
+
+//     // Check for a payload or any query parameters are included in the request (should not be present)
+//     if (
+//       Object.keys(req.body).length !== 0 ||
+//       Object.keys(req.query).length !== 0
+//     ) {
+//       return res.status(400).send(); // Bad Request
+//     }
+
+//     // Check database connectivity
+//     await sequelize.authenticate();
+//     res.set({
+//       "Cache-Control": "no-cache",
+//     });
+//     res.status(200).send(); // OK
+//   } catch (error) {
+//     res.set({
+//       "Cache-Control": "no-cache",
+//     });
+//     return res.status(503).send(); // Service Unavailable
+//   }
+// });
+// utils/validateHealthzRequest.js
+const validateHealthzRequest = (req) => {
+  // Disallow the HEAD method
+  if (req.method === "HEAD") {
+    return {
+      valid: false,
+      statusCode: 405,
+      message: "Method Not Allowed",
+    };
+  }
+
+  // Disallow any body content (e.g., form data) by checking if Content-Type is present
+  if (req.headers["content-type"]) {
+    return {
+      valid: false,
+      statusCode: 400,
+      message: "Bad Request",
+    };
+  }
+
+  // Check for a payload or any query parameters (should not be present)
+  if (Object.keys(req.body).length !== 0 || Object.keys(req.query).length !== 0) {
+    return {
+      valid: false,
+      statusCode: 400,
+      message: "Bad Request",
+    };
+  }
+
+  // If validation passes, return valid
+  return {
+    valid: true,
+  };
+};
+
+
 // Database connection verification route
 app.get("/healthz", async (req, res) => {
-  // try {
-  //   await sequelize.authenticate();
-  //   res.send('Database connection has been established successfully.');
-  // } catch (error) {
-  //   res.status(500).send('Unable to connect to the database: ' + error.message);
-  // }
+  // Call the validation function
+  const validationResult = validateHealthzRequest(req);
+
+  // If validation fails, return the appropriate response
+  if (!validationResult.valid) {
+    return res.status(validationResult.statusCode).json({ message: validationResult.message });
+  }
 
   try {
-    // Disallow the HEAD method
-    if (req.method === "HEAD") {
-      return res.status(405).json({ message: "Method Not Allowed" }); // Method Not Allowed
-    }
-    // Disallow any body content (e.g., form data) by checking if Content-Type is present
-    if (req.headers["content-type"]) {
-      return res.status(400).send();
-    }
-
-    // Check for a payload or any query parameters are included in the request (should not be present)
-    if (
-      Object.keys(req.body).length !== 0 ||
-      Object.keys(req.query).length !== 0
-    ) {
-      return res.status(400).send(); // Bad Request
-    }
-
     // Check database connectivity
     await sequelize.authenticate();
     res.set({
@@ -504,19 +564,5 @@ app.delete('/v1/user/self/pic', authenticateUser, async (req, res) => {
   }
 });
 
-// Start the server and sync the database
-sequelize
-  .sync({ force: true })
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`App is running on http://localhost:${port}`);
-    });
-  })
-  .catch((error) => {
-    console.error("Error syncing with the database:", error);
-  });
 
-  // 
-
-
-  // 
+module.exports = { app, User, sequelize, validateHealthzRequest};

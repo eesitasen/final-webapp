@@ -1,0 +1,62 @@
+name: CI for tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  nodejs-test:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    services:
+      db:
+        image: mysql:latest
+        ports:
+          - ${{ vars.MYSQL_PORT }}:3306
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_RPASSWORD }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE }}
+          MYSQL_USER: ${{  secrets.MYSQL_USER }}
+          MYSQL_HOST: ${{ vars.MYSQL_HOST }}
+        options: >-
+          --health-cmd="mysqladmin ping -u$MYSQL_USER -p$MYSQL_PASSWORD --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Grant Privileges to MySQL User
+        run: |
+          mysql -h ${{ vars.MYSQL_HOST }} -u ${{ secrets.MYSQL_ROOTUSER }} -p${{ secrets.MYSQL_RPASSWORD }} -e "GRANT ALL PRIVILEGES ON *.* TO '${{  secrets.MYSQL_USER }}'@'%' WITH GRANT OPTION;"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Wait for MySQL to be ready
+        run: |
+          until mysqladmin ping -h ${{ vars.MYSQL_HOST }}  -u${{  secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }}  --silent; do
+            echo "Waiting for database connection..."
+            sleep 5
+          done
+
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+      - name: Run Integration Tests
+        env:
+          DB_USER: ${{  secrets.MYSQL_USER }}
+          DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          DB_HOST: ${{ vars.MYSQL_HOST }}
+          DB_NAME: ${{ vars.MYSQL_DATABASE }}
+        run: npm run test:integration
