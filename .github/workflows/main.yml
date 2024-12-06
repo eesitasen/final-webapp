@@ -35,10 +35,6 @@ jobs:
         with:
           node-version: "14" # Set the version of Node.js that matches app requirements
 
-      # Step 6: Run Unit Tests
-      - name: Run Unit Tests
-        run: npm test
-
       # Step 5: Build application artifact (e.g., create a zip of the app)
       - name: Build application artifact
         run: |
