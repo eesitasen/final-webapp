@@ -9,6 +9,7 @@ const StatsD = require('hot-shots');
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
 const sgMail = require('@sendgrid/mail');
+const { logger, logData } = require("./winston");
 
 const app = express();
 const port = 8080;
@@ -312,11 +313,13 @@ app.get("/healthz", async (req, res) => {
   try {
     // Check database connectivity
     await sequelize.authenticate();
+    logData(req.method, req.originalUrl, req.get("user-agent"), "info", req.body, 200, "Service Healthy");
     res.set({
       "Cache-Control": "no-cache",
     });
     res.status(200).send(); // OK
   } catch (error) {
+    logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 503, "Service not Healthy");
     res.set({
       "Cache-Control": "no-cache",
     });
@@ -379,9 +382,11 @@ app.post("/v1/user", async (req, res) => {
       // Optionally, log the SNS error or alert admins if necessary
     }
 
+    logData(req.method, req.originalUrl, req.get("user-agent"), "info", req.body, 201, "User created", user);
     res.status(201).json({ message: "User Created", user: user.toJSON() });
   } catch (error) {
     console.error("Error:", error);
+    logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 500, "Unable to create user");
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -392,6 +397,7 @@ app.get("/verify", async (req, res) => {
 
     // Verify the token and email are provided
     if (!token || !userEmail) {
+      logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 400, "Missing token or email");
       return res.status(400).json({ message: "Missing token or email" });
     }
 
@@ -400,6 +406,7 @@ app.get("/verify", async (req, res) => {
 
     if (!user) {
       console.log(`User not found for email: ${userEmail}`);
+      logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 400, "User not found");
       return res.status(400).json({ message: "User not found" });
     }
 
@@ -410,6 +417,7 @@ app.get("/verify", async (req, res) => {
     // Step 2: Fetch the stored token from the database and compare it with the provided token
     if (user.verification_token !== token) {
       console.log(`Token mismatch: stored token is different from provided token.`);
+      logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 400, "Invalid token");
       return res.status(400).json({ message: "Invalid token" });
     }
 
@@ -422,6 +430,7 @@ app.get("/verify", async (req, res) => {
 
     if (currentTime > tokenExpiry) {
       console.log(`Token has expired. Current time is later than expiry.`);
+      logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 400, "Token has expired");
       return res.status(400).json({ message: "Token has expired" });
     }
 
@@ -432,6 +441,7 @@ app.get("/verify", async (req, res) => {
       console.log(`Token verified successfully.`);
     } catch (err) {
       console.error(`JWT verification failed: ${err.message}`);
+      logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 400, "Invalid token");
       return res.status(400).json({ message: "Invalid token" });
     }
 
@@ -444,9 +454,11 @@ app.get("/verify", async (req, res) => {
     // If all checks pass
     user.verification_status = 'verified';
     await user.save(); // Save the updated user to the database
+    logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 400, "Invalid token or email mismatch");
     res.status(200).json({ message: "User verified successfully!" });
   } catch (error) {
     console.error("Error in verification process:", error);
+    logData(req.method, req.originalUrl, req.get("user-agent"), "error", req.body, 500, "Failed to verify user");
     res.status(500).json({ message: "Failed to verify user", error: error.message });
   }
 });
