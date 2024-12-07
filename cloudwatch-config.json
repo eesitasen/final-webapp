@@ -8,7 +8,7 @@
         "files": {
           "collect_list": [
             {
-              "file_path": "/var/log/syslog",
+              "file_path": "/opt/csye6225/app/combined.log",
               "log_group_name": "webApp-log-group",
               "log_stream_name": "webApp-log-stream"
             }
