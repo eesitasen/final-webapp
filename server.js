@@ -1,7 +1,5 @@
 require('dotenv').config();
-const { app } = require('./app'); // Importing app and sequelize
-const { Sequelize } = require('sequelize');
-const express = require("express");
+const { app, sequelize } = require('./app'); // Importing app and sequelize
 
 const port = process.env.PORT || 8080;
 
@@ -9,13 +7,7 @@ const port = process.env.PORT || 8080;
 const startServer = async () => {
   
     try {
-  
-        const sequelize = new Sequelize("db", "root", "Northeastern@06092023", {
-            host: "localhost",
-            dialect: "mysql",
-          });
-  
-          sequelize
+            sequelize
           .sync({ force: true })
           .then(() => {
             app.listen(port, () => {
@@ -35,3 +27,5 @@ const startServer = async () => {
   };
   
   startServer();
+
+//   

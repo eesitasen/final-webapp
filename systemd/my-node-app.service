@@ -8,7 +8,7 @@ EnvironmentFile=/etc/environment
 Type=simple
 User=csye6225
 Group=csye6225
-ExecStart=/bin/bash -c '. /etc/environment && /usr/bin/node /opt/csye6225/app/app.js'
+ExecStart=/bin/bash -c '. /etc/environment && /usr/bin/node /opt/csye6225/app/server.js'
 Restart=on-failure
 
 [Install]
