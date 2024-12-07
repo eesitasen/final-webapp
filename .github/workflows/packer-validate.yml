@@ -23,7 +23,6 @@ jobs:
 
       - name: Run Packer init
         run: |
-          cd packer 
           packer init ./custom-ami.pkr.hcl
 
       - name: Run Packer fmt
