@@ -9,6 +9,10 @@
     "test:unit": "cross-env NODE_ENV=test jest --testPathPattern=unit",
     "test:integration": "cross-env NODE_ENV=test jest --testPathPattern=integration"
   },
+  "devDependencies": {
+    "jest": "^28.0.0",
+    "supertest": "^6.0.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
