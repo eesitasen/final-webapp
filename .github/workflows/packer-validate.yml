@@ -1,0 +1,44 @@
+name: Packer CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  packer-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Zip Web App
+        run: zip -r webapp.zip .
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: ${{ vars.PACKER_VERSION }}
+
+      - name: Run Packer init
+        run: |
+          cd packer 
+          packer init ./custom-ami.pkr.hcl
+
+      - name: Run Packer fmt
+        id: packer-fmt
+        run: |
+          cd packer
+          if ! packer fmt -check=true ./custom-ami.pkr.hcl; then
+            echo "Formatting check failed for custom-ami.pkr.hcl"
+            exit 1
+          fi
+
+      - name: Run Packer validate
+        run: |
+          cd packer
+          if ! packer validate ./custom-ami.pkr.hcl; then
+            echo "Validation failed for custom-ami.pkr.hcl"
+            exit 1
+          fi
