@@ -23,21 +23,21 @@ jobs:
 
       - name: Run Packer init
         run: |
-          packer init ./custom-ami.pkr.hcl
+          packer init ./aws-ubuntu.pkr.hcl
 
       - name: Run Packer fmt
         id: packer-fmt
         run: |
           cd packer
-          if ! packer fmt -check=true ./custom-ami.pkr.hcl; then
-            echo "Formatting check failed for custom-ami.pkr.hcl"
+          if ! packer fmt -check=true ./aws-ubuntu.pkr.hcl; then
+            echo "Formatting check failed for aws-ubuntu.pkr.hcl"
             exit 1
           fi
 
       - name: Run Packer validate
         run: |
           cd packer
-          if ! packer validate ./custom-ami.pkr.hcl; then
-            echo "Validation failed for custom-ami.pkr.hcl"
+          if ! packer validate ./aws-ubuntu.pkr.hcl; then
+            echo "Validation failed for aws-ubuntu.pkr.hcl"
             exit 1
           fi
