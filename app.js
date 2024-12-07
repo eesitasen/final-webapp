@@ -8,7 +8,8 @@ const StatsD = require('hot-shots');
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
 const sgMail = require('@sendgrid/mail');
-const { logger, logData } = require("./winston");
+// const { logger, logData } = require("./winston");
+const winston = require('winston');
 const WinstonCloudWatch = require('winston-cloudwatch');
 
 const app = express();
