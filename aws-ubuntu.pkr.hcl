@@ -8,7 +8,7 @@ packer {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "packer-linux-aws-final2"
+  ami_name      = "packer-linux-aws-final3"
   instance_type = "t2.micro"
   region        = "us-west-2"
   source_ami_filter {
