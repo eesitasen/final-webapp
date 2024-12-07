@@ -1,0 +1,43 @@
+name: Packer Validate
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  packer-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Zip Web App
+        run: |
+          mkdir -p build
+          zip -r build/artifact.zip .
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: ${{ vars.PACKER_VERSION }}
+
+      - name: Run Packer init
+        run: |
+          packer init ./aws-ubuntu.pkr.hcl
+
+      - name: Run Packer fmt
+        id: packer-fmt
+        run: |
+          if ! packer fmt -check=true ./aws-ubuntu.pkr.hcl; then
+            echo "Formatting check failed for aws-ubuntu.pkr.hcl"
+            exit 1
+          fi
+
+      - name: Run Packer validate
+        run: |
+          if ! packer validate ./aws-ubuntu.pkr.hcl; then
+            echo "Validation failed for aws-ubuntu.pkr.hcl"
+            exit 1
+          fi
