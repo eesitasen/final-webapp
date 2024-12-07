@@ -4,13 +4,12 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
 const AWS = require('aws-sdk');
+const cloudwatch = new AWS.CloudWatch({ region: 'us-west-2' });
 const StatsD = require('hot-shots');
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
 const sgMail = require('@sendgrid/mail');
-// const { logger, logData } = require("./winston");
-const winston = require('winston');
-const WinstonCloudWatch = require('winston-cloudwatch');
+const { logger, logData } = require("./winston");
 
 const app = express();
 const port = 8080;
@@ -19,33 +18,7 @@ const snsClient = new SNSClient({ region: "us-west-2" }); // Replace with your A
 const SNS_TOPIC_ARN = process.env.SNS_TOPIC_ARN; // Replace with your SNS topic ARN
 const secretKey = process.env.secret_key; // Store this in an env variable
 
-const cloudwatchConfig = {
-  logGroupName: process.env.CLOUDWATCH_LOG_GROUP_NAME || 'MyAppLogGroup', // Set your log group name
-  logStreamName: process.env.CLOUDWATCH_LOG_STREAM_NAME || 'MyAppLogStream', // Set your log stream name
-  region: process.env.AWS_REGION || 'us-west-2', // Set your AWS region
-};
-
-// Initialize CloudWatch service
-const cloudwatch = new AWS.CloudWatch({ region: 'us-west-2' });
-
-// Set up Winston logger with CloudWatch transport
-const logger = winston.createLogger({
-  level: 'info', // Log level
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.Console(), // Console log transport
-    new WinstonCloudWatch({
-      cloudWatchLogs: cloudwatch,
-      logGroupName: cloudwatchConfig.logGroupName,
-      logStreamName: cloudwatchConfig.logStreamName,
-      awsRegion: cloudwatchConfig.region,
-      jsonMessage: true, // Log in JSON format
-      flushInterval: 2000, // Set flush interval (in ms)
-    }),
-  ],
-});
-
-
+// 
 
 // // Sequelize setup for MySQL
 const { Sequelize, DataTypes } = require("sequelize");
@@ -160,17 +133,6 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Middleware to parse JSON
 app.use(express.json());
-
-app.use((req, res, next) => {
-  logger.info({
-    message: 'Incoming request',
-    method: req.method,
-    url: req.url,
-    headers: req.headers,
-  });
-  next();
-});
-
 
 // Middleware to log API usage and response time
 app.use((req, res, next) => {
@@ -616,5 +578,3 @@ app.delete('/v1/user/self/pic', authenticateUser, async (req, res) => {
 
 
 module.exports = { app, User, sequelize, validateHealthzRequest};
-
-// 
