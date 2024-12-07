@@ -28,7 +28,6 @@ jobs:
       - name: Run Packer fmt
         id: packer-fmt
         run: |
-          cd packer
           if ! packer fmt -check=true ./aws-ubuntu.pkr.hcl; then
             echo "Formatting check failed for aws-ubuntu.pkr.hcl"
             exit 1
@@ -36,7 +35,6 @@ jobs:
 
       - name: Run Packer validate
         run: |
-          cd packer
           if ! packer validate ./aws-ubuntu.pkr.hcl; then
             echo "Validation failed for aws-ubuntu.pkr.hcl"
             exit 1
